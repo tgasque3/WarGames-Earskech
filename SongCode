@@ -1,0 +1,543 @@
+#        script_name:  warSimulation
+#
+#        author: Travis Gasque
+#
+#        description: a song created to show the lead up to and cause of car between
+#        two countries
+ 
+from earsketch import *
+from random import *
+ 
+init()
+setTempo(120)
+ 
+c1 = []
+c2 = []
+actions = [0,0,0,0]
+choices = []
+ 
+opening = WAR_NEVER_CHANGES
+interlude1 = JFK_SHORT
+interlude2 = MLK_Short
+static= STATIC_TONE
+peace = PEACE
+embargo = WAR_HAS_CHANGED
+negotiation = WAR_NEVER_CHANGES
+ 
+atari1 = EIGHT_BIT_ATARI_SFX_002
+atari2 = EIGHT_BIT_ATARI_SFX_005
+atari3 = EIGHT_BIT_ATARI_SFX_009
+atari4 = EIGHT_BIT_ATARI_SFX_013
+atari6 = EIGHT_BIT_ATARI_SFX_001
+dubStore = [atari1, atari3, atari4]
+ 
+soldier1 = Y48_DRUMPAD_1
+resource1 = Y48_BELL_1
+landmass1 = Y48_ELECTRO_2
+politics1 = Y48_SCIFY_1
+transport1 = HIPHOP_DUSTYGUITAR_001
+ 
+soldier2 = Y52_PERCUSSION_2
+resource2 = Y52_BELL_1
+landmass2 = Y52_ELECTRO_1
+politics2 = Y52_ORGAN_1
+transport2 = Y48_BASS_1
+ 
+c1songs = [resource1, landmass1, politics1, soldier1]
+c2songs = [resource2, landmass2, politics2, soldier1]
+ 
+# Create an array , which randomly generates the assets of a country.
+# Each element in the array represents the quality or quantity of said asset:
+# [0] = Size of Standing Army
+# [1] = Resources
+# [2] = Politician
+# [3] = Land Mass
+# [4] = Transportation
+# [5] = Population
+for stat in range(0,6):
+    c1 = [randint(10,100)] + c1
+    c1 = c1
+    c2 = [randint(10,100)] + c2
+    c2 = c2
+ 
+c1Origin = c1
+print "Country One's Initial Stats:"
+print c1Origin
+print ""
+c2Origin = c2
+print "Country Two's Initial Stats:"
+print c2Origin
+print ""
+c1TotalOrigin = sum(c1)
+c2TotalOrigin = sum(c2)
+ 
+ 
+#Creates random string for opening of attack ending
+def fighting(track, songArray, measureStart, measureEnd):
+    beatString = ""
+    newBeat = ""
+    for char in range(0,16):
+        tracks = len(songArray)
+        beatOptions = "+" + str(randint(0,tracks-1)) + "-"
+        beatString = beatString + choice(beatOptions)
+         
+    for char in range(0,16):
+        newBeat = choice(beatString) + newBeat
+                 
+    for measure in range(measureStart, measureEnd):
+        makeBeat(songArray, track, measure, beatString)
+        makeBeat(songArray, track+1, measure, newBeat)
+ 
+    setEffect(track, PAN, LEFT_RIGHT, 100, measureStart)
+    setEffect(track+1, PAN, LEFT_RIGHT, -100,  measureStart)
+ 
+#Creates a playlist that ends attack ending with destruction on all sides.
+def destruction(track, startMeasure):
+    fitMedia(atari6, track, startMeasure, startMeasure+0.1)
+    fitMedia(atari6, track, startMeasure+0.1, startMeasure+0.2)
+    fitMedia(atari6, track, startMeasure+0.2, startMeasure+0.5)
+    fitMedia(atari2, track, startMeasure+0.5, startMeasure+0.8)
+    fitMedia(static, track, startMeasure+1, startMeasure+1.5)
+ 
+#Define how each countries sound changes based on data
+def playCountry (array, measure, string):
+    cArmy                = array[0]
+    cResources            = array[1]
+    cPoliticians            = array[2]
+    cLandmass            = array[3]
+    cTransportation        = array[4]
+    cPopulation            = array[5]
+         
+    #country
+    if (string == 'c1'):
+        fitMedia(landmass1, 1, measure, measure+1)
+        makeBeat(transport1, 2, measure+.25, "-00+00+-")
+        fitMedia(politics1, 3, measure+.5, measure+.75)
+        fitMedia(soldier1, 4, measure+.25, measure+.75)
+        fitMedia(resource1, 5, measure, measure+1)    
+ 
+    elif (string == 'c2'):
+        fitMedia(landmass2, 1, measure, measure+1)
+        makeBeat(transport2, 2, measure+.25, "-00+00+-")
+        fitMedia(politics2, 3, measure+.5, measure+.75)
+        fitMedia(soldier2, 4, measure+.25, measure+.75)
+        fitMedia(resource2, 5, measure, measure+1)        
+     
+    #Landmass
+    setEffect(1, VOLUME, GAIN, 2*(cLandmass/10.00)-10, measure)
+     
+    #Transport Effect
+    setEffect(2, VOLUME, GAIN, 2*(cTransportation/10.00)-10, measure)
+         
+    #Politician effect
+    setEffect(3, VOLUME, GAIN, 2*(cPoliticians/10.00)-10, measure)    
+         
+    #Soldier Effect
+    setEffect(4, VOLUME, GAIN, 2*(cArmy/10.00)-10, measure)    
+         
+    #Resources effect
+    setEffect(5, VOLUME, GAIN, 2*(cResources/10.00)-10, measure)    
+         
+ 
+def countryEquations(arrayAggressor, arrayDefender, actionsArray):
+    attack = (arrayAggressor[0]*3)/(arrayAggressor[1]+arrayAggressor[2]+arrayDefender[3])
+    actionsArray[0] = [attack]
+    negotiation = (arrayAggressor[3]-arrayDefender[2]+arrayAggressor[4]+arrayDefender[3])/3
+    actionsArray[1] = [negotiation]
+    embargo = (arrayAggressor[4] + arrayDefender[0])/(arrayDefender[1]*2)
+    actionsArray[2] = [embargo]
+    peace = (arrayAggressor[4] + arrayAggressor[2])/(arrayDefender[0]*2)
+    actionsArray[3] = [peace]
+ 
+#Detemine coutries reaction:
+def countryAction(arrayAggressor, arrayDefender, arrayActions):
+    selection = max(arrayActions)    
+    arrayArmyChange = random()*10
+    arrayResourceChange = random()*10
+    arrayLandmassChange = random()*10
+    arrayPoliticsChange = random()*10
+    arrayTechnologyChange = random()*10
+    arrayPopulationChange = random()*10
+    if (selection == actions[0]):
+        # arrayAggressor asset reactions:
+         arrayAggressor[0] = arrayAggressor[0] - arrayArmyChange
+         arrayAggressor[1] = arrayAggressor[1] + arrayResourceChange
+         arrayAggressor[2] = arrayAggressor[2] + arrayLandmassChange
+         arrayAggressor[3] = arrayAggressor[3] + arrayPoliticsChange
+         arrayAggressor[4] = arrayAggressor[4] - arrayTechnologyChange
+         arrayAggressor[5] = arrayAggressor[5] + arrayPopulationChange
+     
+        # arrayDefender asset reactions:
+         arrayDefender[0] = arrayDefender[0] + arrayArmyChange
+         arrayDefender[1] = arrayDefender[1] - arrayResourceChange
+         arrayDefender[2] = arrayDefender[2] - arrayLandmassChange
+         arrayDefender[3] = arrayDefender[3] - arrayPoliticsChange
+         arrayDefender[4] = arrayDefender[4] + arrayTechnologyChange
+         arrayDefender[5] = arrayDefender[5] - arrayPopulationChange
+             
+    elif (selection == actions[1]):             
+         # arrayAggressor asset reactions:
+        arrayAggressor[1] =  arrayAggressor[1] + arrayResourceChange
+        arrayAggressor[2] =  arrayAggressor[2] + arrayLandmassChange
+        arrayAggressor[3] =  arrayAggressor[3] - arrayPoliticsChange
+        arrayAggressor[4] =  arrayAggressor[4] - arrayTechnologyChange
+        arrayAggressor[5] =  arrayAggressor[5] + arrayPopulationChange
+  
+         # arrayDefender asset reactions:
+        arrayDefender[1] =  arrayDefender[1] - arrayResourceChange
+        arrayDefender[2] =  arrayDefender[2] - arrayLandmassChange
+        arrayDefender[3] =  arrayDefender[3] + arrayPoliticsChange
+        arrayDefender[4] =  arrayDefender[4] + arrayTechnologyChange
+        arrayDefender[5] =  arrayDefender[5] - arrayPopulationChange
+                 
+    elif (selection == actions[2]):
+        # arrayAggressorasset reactions:
+        arrayAggressor[0] =  arrayAggressor[0] + arrayArmyChange
+        arrayAggressor[1] =  arrayAggressor[1] - arrayResourceChange
+        arrayAggressor[3] =  arrayAggressor[3] - arrayPoliticsChange
+        arrayAggressor[5] =  arrayAggressor[5] + arrayPopulationChange
+      
+         # arrayDefenderasset reactions:
+        arrayDefender[0] = arrayDefender[0] - arrayArmyChange
+        arrayDefender[1] = arrayDefender[1] + arrayResourceChange
+        arrayDefender[3]=  arrayDefender[3] + arrayPoliticsChange
+        arrayDefender[5] = arrayDefender[5] - arrayPopulationChange
+         
+    elif (selection == actions [3]):
+         # arrayAggressorasset reactions:
+         arrayAggressor[0] = arrayAggressor[0] + arrayArmyChange
+         arrayAggressor[1] = arrayAggressor[1] - arrayResourceChange
+         arrayAggressor[2] = arrayAggressor[2] + arrayLandmassChange
+         arrayAggressor[4] = arrayAggressor[4] + arrayTechnologyChange
+         arrayAggressor[5] = arrayAggressor[5] + arrayPopulationChange
+      
+         # arrayDefenderasset reactions:
+         arrayDefender[0] = arrayDefender[0] - arrayArmyChange
+         arrayDefender[1] = arrayDefender[1] + arrayResourceChange
+         arrayDefender[2] = arrayDefender[2] - arrayLandmassChange
+         arrayDefender[4] = arrayDefender[4] - arrayTechnologyChange
+         arrayDefender[5] = arrayDefender[5] - arrayPopulationChange
+     
+def checkValues(array):
+    if (array[0] <= 0):
+        if (array[0] == 0):
+            array[1] = array[1] - 0.2
+            array[3] = array[3] - 0.4
+            array[5] = array[5] - 0.4
+            array[0] = array[0] + 1
+        else:
+            arrayCorrection = abs(array[0])
+            array[1] = array[1] - 0.2*arrayCorrection
+            array[3] = array[3] - 0.4*arrayCorrection
+            array[5] = array[5] - 0.4*arrayCorrection
+            array[0] = array[0] + 1*arrayCorrection
+             
+    elif (array[1] <= 0):
+        if (array[1] == 0):
+            array[0] = array[0] - 0.2
+            array[2] = array[2] - 0.3
+            array[3] = array[3] - 0.1
+            array[4] = array[4] - 0.3
+            array[5] = array[5] - 0.1
+            array[1] = array[1] + 1
+        else:
+            arrayCorrect = abs(array[1])
+            array[0] = array[0] - 0.2*arrayCorrect
+            array[2] = array[2] - 0.3*arrayCorrect
+            array[3] = array[3] - 0.1*arrayCorrect
+            array[4] = array[4] - 0.3*arrayCorrect
+            array[5] = array[5] - 0.1*arrayCorrect
+            array[1] = array[1] + 1*arrayCorrect
+    elif (array[2] <= 0):
+        if (array[2] == 0):
+            array[0] = array[0] - 0.2
+            array[1] = array[1] - 0.2
+            array[3] = array[3] - 0.2
+            array[4] = array[4] - 0.2
+            array[5] = array[5] - 0.2
+            array[2] = array[2] + 1
+        else:
+            arrayCorrect = abs(array[2])
+            array[0] = array[0] - 0.2*arrayCorrect
+            array[1] = array[1] - 0.2*arrayCorrect
+            array[3] = array[3] - 0.2*arrayCorrect
+            array[4] = array[4] - 0.2*arrayCorrect
+            array[5] = array[5] - 0.2*arrayCorrect
+            array[2] = array[2] + 1*arrayCorrect
+    elif (array[3] <= 0):
+        if (array[3] == 0):
+            array[0] = array[0] - 0.3
+            array[4] = array[4] - 0.1
+            array[5] = array[5] - 0.6
+            array[3] = array[3] + 1
+        else:
+            arrayCorrect = abs(array[3])
+            array[0] = array[0] - 0.3*arrayCorrect
+            array[4] = array[4] - 0.1*arrayCorrect
+            array[5] = array[5] - 0.6*arrayCorrect
+            array[3] = array[3] + 1*arrayCorrect
+    elif (array[4] <= 0):
+        if (array[4] == 0):
+            array[0] = array[0] - 0.3
+            array[1] = array[1] - 0.2
+            array[3] = array[3] - 0.2
+            array[5] = array[5] - 0.3
+            array[4] = array[4] + 1
+        else:
+            arrayCorrect = abs(array[4])
+            array[0] = array[0] - 0.3*arrayCorrect
+            array[1] = array[1] - 0.2*arrayCorrect
+            array[3] = array[3] - 0.2*arrayCorrect
+            array[5] = array[5] - 0.3*arrayCorrect
+            array[4] = array[4] + 1*arrayCorrect
+         
+    elif (array[5] <= 0):
+        if (array[5] == 0):
+            array[0] = array[0] - 0.5
+            array[3] = array[3] - 0.5
+            array[5] = array[5] + 1
+        else:
+            arrayCorrect = abs(array[5])
+            array[0] = array[0] - 0.5*arrayCorrect
+            array[3] = array[3] - 0.5*arrayCorrect
+            array[5] = array[5] + 1*arrayCorrect
+    elif (array[0] >= 100):
+        if (array[0] == 100):
+            array[1] = array[1] + 0.2
+            array[3] = array[3] + 0.4
+            array[5] = array[5] + 0.4
+            array[0] = array[0] - 1
+        else:
+            arrayCorrect = abs(100 - array[0])
+            array[1] = array[1] + 0.2*arrayCorrect
+            array[3] = array[3] + 0.4*arrayCorrect
+            array[5] = array[5] + 0.4*arrayCorrect
+            array[0] = array[0] - 1*arrayCorrect
+    elif (array[1] >= 100):
+        if(array[1] == 100):
+            array[0] = array[0] + 0.2
+            array[2] = array[2] + 0.3
+            array[3] = array[3] + 0.1
+            array[4] = array[4] + 0.3
+            array[5] = array[5] + 0.1
+            array[1] = array[1] - 1
+        else:
+            arrayCorrect = abs(100 - array[1])
+            array[0] = array[0] + 0.2*arrayCorrect
+            array[2] = array[2] + 0.3*arrayCorrect
+            array[3] = array[3] + 0.1*arrayCorrect
+            array[4] = array[4] + 0.3*arrayCorrect
+            array[5] = array[5] + 0.1*arrayCorrect
+            array[1] = array[1] - 1*arrayCorrect
+    elif (array[2] >= 100):
+        if (array[2] == 100):
+            array[0] = array[0] + 0.2
+            array[1] = array[1] + 0.2
+            array[3] = array[3] + 0.2
+            array[4] = array[4] + 0.2
+            array[5] = array[5] + 0.2
+            array[2] = array[2] - 1
+        else:
+            arrayCorrect = abs(100 - array[2])
+            array[0] = array[0] + 0.2*arrayCorrect
+            array[1] = array[1] + 0.2*arrayCorrect
+            array[3] = array[3] + 0.2*arrayCorrect
+            array[4] = array[4] + 0.2*arrayCorrect
+            array[5] = array[5] + 0.2*arrayCorrect
+            array[2] = array[2] - 1*arrayCorrect
+    elif (array[3] >= 100):
+        if (array[3] == 100):
+            array[0] = array[0] + 0.3
+            array[4] = array[4] + 0.1
+            array[5] = array[5] + 0.6
+            array[3] = array[3] - 1
+        else:
+            arrayCorrect = abs(100 - array[3])
+            array[0] = array[0] + 0.3*arrayCorrect
+            array[4] = array[4] + 0.1*arrayCorrect
+            array[5] = array[5] + 0.6*arrayCorrect
+            array[3] = array[3] - 1*arrayCorrect
+    elif (array[4] >= 100):
+        if (array[4] == 100):
+            array[0] = array[0] + 0.3
+            array[1] = array[1] + 0.2
+            array[3] = array[3] + 0.2
+            array[5] = array[5] + 0.3
+            array[4] = array[4] - 1
+        else:
+            arrayCorrect = abs(100 - array[4])
+            array[0] = array[0] + 0.3*arrayCorrect
+            array[1] = array[1] + 0.2*arrayCorrect
+            array[3] = array[3] + 0.2*arrayCorrect
+            array[5] = array[5] + 0.3*arrayCorrect
+            array[4] = array[4] - 1*arrayCorrect
+    elif (array[5] >= 100):
+        if (array[5] == 100):
+            array[0] = array[0] + 0.5
+            array[3] = array[3] + 0.5
+            array[5] = array[5] - 1
+        else:
+            arrayCorrect = abs(100 - array[5])
+            array[0] = array[0] + 0.5*arrayCorrect
+            array[3] = array[3] + 0.5*arrayCorrect
+            array[5] = array[5] - 1*arrayCorrect
+ 
+def endingSong(array1, array2, arrayActions, measureStart):
+    c1TotalFinal = sum(array1)
+    c2TotalFinal = sum(array2)
+    if ((c2TotalFinal-c2TotalOrigin) < (c1TotalFinal-c1TotalOrigin)):
+        arrayFinal = array1
+        arrayLost = array2
+        print "Country One Wins."
+        print "Winner's Final Stats:"
+        print arrayFinal
+        print ""
+        print "Country Two Loses."
+        print "Loser's Final Stats:"
+        print arrayLost
+         
+    else:
+        arrayFinal = array2
+        arrayLost = array1
+        print "Country One Wins."
+        print "Winner's Final Stats:"
+        print arrayFinal
+        print ""
+        print "Country Two Loses."
+        print "Loser's Final Stats:"
+        print arrayLost
+         
+    selection = min(arrayLost)
+     
+     
+    if (selection == arrayLost[0]):
+        print "War Ended with a Final Decisive Battle."
+        fighting(1, dubStore, measureStart, measureStart+5)
+        fighting(3, dubStore, measureStart, measureStart+5)
+        destruction(1, measureStart+5)
+        setEffect(1, VOLUME, GAIN, -10 , measureStart+7, -60, measureStart+10)
+        setEffect(2, VOLUME, GAIN, -10 , measureStart+7, -60, measureStart+10)
+        setEffect(3, VOLUME, GAIN, -10 , measureStart+7, -60, measureStart+10)
+        setEffect(4, VOLUME, GAIN, -10 , measureStart+7, -60, measureStart+10)
+     
+    elif (selection == arrayLost[1]):
+        print "War Decided by Strangulation of Resources."
+        fitMedia(embargo, 1, measureStart, measureStart+6)
+        setEffect(1, VOLUME, GAIN, 0, measureStart)
+        fitMedia(c2songs[0], 2, measureStart+1, measureStart+7)
+        setEffect(2, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c1songs[1], 3, measureStart+1 , measureStart+7)
+        setEffect(3, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c2songs[2], 4, measureStart+1, measureStart+7)
+        setEffect(4, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c1songs[3], 5, measureStart+1,measureStart+7)
+        setEffect(5, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+         
+    elif (selection == arrayLost[2]):
+        print "War Ended in a Peace Agreement."
+        fitMedia(peace, 1, measureStart, measureStart+4.85)
+        setEffect(1, VOLUME, GAIN, 0, measureStart)
+        fitMedia(c1songs[0], 2, measureStart, measureStart+5)
+        setEffect(2, VOLUME, GAIN, -10, measureStart, -60, measureStart+5)
+        fitMedia(c1songs[1], 3, measureStart, measureStart+5)
+        setEffect(3, VOLUME, GAIN, -10, measureStart, -60, measureStart+5)
+        fitMedia(c2songs[2], 4, measureStart, measureStart+5)
+        setEffect(4, VOLUME, GAIN, -10, measureStart, -60, measureStart+5)
+        fitMedia(c2songs[3], 5, measureStart, measureStart+5)
+        setEffect(5, VOLUME, GAIN, -10, measureStart, -60, measureStart+5)
+         
+    elif (selection == arrayLost[3]):
+        print "War Ended in the Annexation of Loser's Land."
+        fitMedia(opening, 1, measureStart, measureStart+6.75)
+        setEffect(1, VOLUME, GAIN, 0, measureStart)
+        fitMedia(c1songs[0], 2, measureStart+1, measureStart+7)
+        setEffect(2, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c2songs[1], 3, measureStart+1 , measureStart+7)
+        setEffect(3, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c1songs[2], 4, measureStart+1, measureStart+7)
+        setEffect(4, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c2songs[3], 5, measureStart+1,measureStart+7)
+        setEffect(5, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+     
+    elif (selection == arrayLost[4]):
+        print "War Decided by Strangulation of Resources."
+        fitMedia(embargo, 1, measureStart, measureStart+6)
+        setEffect(1, VOLUME, GAIN, 0, measureStart)
+        fitMedia(c2songs[0], 2, measureStart+1, measureStart+7)
+        setEffect(2, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c1songs[1], 3, measureStart+1 , measureStart+7)
+        setEffect(3, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c2songs[2], 4, measureStart+1, measureStart+7)
+        setEffect(4, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c1songs[3], 5, measureStart+1,measureStart+7)
+        setEffect(5, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+         
+    elif (selection == arrayLost[5]):
+        print "Opposing Side Lost All Population."
+        fitMedia(c2songs[0], 2, measureStart+1, measureStart+7)
+        setEffect(2, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c1songs[1], 3, measureStart+1 , measureStart+7)
+        setEffect(3, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c2songs[2], 4, measureStart+1, measureStart+7)
+        setEffect(4, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+        fitMedia(c1songs[3], 5, measureStart+1,measureStart+7)
+        setEffect(5, VOLUME, GAIN, -10, measureStart, -60, measureStart+7)
+     
+fitMedia(opening, 1, 1,7.75)
+fitMedia(resource1, 2, 2, 8)
+setEffect(2, VOLUME, GAIN, -20.0, 1, -10, 8)
+fitMedia(resource2, 3, 2,8)
+setEffect(3, VOLUME, GAIN, -20.0, 1, -10, 8)
+fitMedia(landmass1, 4, 2, 8)
+setEffect(4, VOLUME, GAIN, -20.0, 1, -10, 8)
+fitMedia(landmass2, 5, 2,8)
+setEffect(5, VOLUME, GAIN, -20.0, 1, -10, 8)
+for stat in range(8,15):
+    countryEquations(c1, c2, actions)
+    countryAction(c1, c2, actions)
+    for checks in range(1,10):
+        checkValues(c1)
+    playCountry(c1, stat, 'c1')
+for stat in range(15,21):
+    countryEquations(c2, c1, actions)
+    countryAction(c2, c1, actions)
+    for checks in range(1,10):
+        checkValues(c2)
+    playCountry(c2, stat, 'c2')
+fitMedia(interlude1, 1, 21,27.4)
+fitMedia(c1songs[0], 2, 21, 28)
+fitMedia(c1songs[1], 3, 21,28)
+fitMedia(c1songs[2], 4, 21, 28)
+fitMedia(c1songs[3], 5, 21,28)
+for stat in range(28,35):
+    countryEquations(c1, c2, actions)
+    countryAction(c1, c2, actions)
+    for checks in range(1,10):
+        checkValues(c1)
+    playCountry(c1, stat, 'c1')
+for stat in range(35,42):
+    countryEquations(c2, c1, actions)
+    countryAction(c2, c1, actions)
+    for checks in range(1,10):
+        checkValues(c2)
+    playCountry(c2, stat, 'c2')
+fitMedia(interlude2, 1, 42,49.9)
+fitMedia(c2songs[0], 2, 42, 50)
+fitMedia(c2songs[1], 3, 42, 50)
+fitMedia(c2songs[2], 4, 42, 50)
+fitMedia(c2songs[3], 5, 42, 50)
+for stat in range(50,55):
+    countryEquations(c1, c2, actions)
+    countryAction(c1, c2, actions)
+    for checks in range(1,10):
+        checkValues(c1)
+    playCountry(c1, stat, 'c1')
+for stat in range(55,62):
+    countryEquations(c2, c1, actions)
+    countryAction(c2, c1, actions)
+    for checks in range(1,10):
+        checkValues(c2)
+    playCountry(c2, stat, 'c2')
+endingSong(c1, c2, actions, 62)
+ 
+finish()
