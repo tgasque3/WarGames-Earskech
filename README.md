@@ -1,0 +1,2 @@
+# WarGames-Earskech
+Using the Earskech (earsketch.gatech.edu) application, this is a program utilizes the concepts of system dynamics and controls to output a different song every time the program is run. The each portion of the song is generated based on variables available to each side of an imaginary conflict. As the program runs these variables are recalculated to determine the next portion of the song.  
